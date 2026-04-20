@@ -1,0 +1,210 @@
+openapi: 3.0.0
+info:
+  title: Customer Identity API
+  description: >-
+    Ce service gère le référentiel central des identités clients, leur segmentation
+    commerciale (VIP, Standard) et leurs préférences pour le ciblage sémantique.
+  version: 1.0.0
+  x-api-version: "1.0.0"
+
+servers:
+  - url: http://localhost:8000/v1
+    description: Passerelle API Kong (Environnement de développement)
+    
+paths:
+  /customers:
+    get:
+      summary: Liste l'annuaire des clients avec filtres
+      operationId: listCustomers
+      tags:
+        - Customers
+      parameters:
+        - name: full_name
+          in: query
+          required: false
+          description: Filtrer par nom complet (recherche partielle)
+          schema:
+            type: string
+            example: "Alice"
+        - name: email
+          in: query
+          required: false
+          description: Filtrer par adresse email exacte
+          schema:
+            type: string
+            format: email
+            example: "alice@example.com"
+        - name: segment
+          in: query
+          required: false
+          description: Filtrer par segment marketing
+          schema:
+            type: string
+            enum: [VIP, Standard, Nouveau]
+        - name: city
+          in: query
+          required: false
+          description: Filtrer par ville de résidence
+          schema:
+            type: string
+            example: "Paris"
+        - name: interest
+          in: query
+          required: false
+          description: Filtrer par centre d'intérêt (ex. Gaming)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des clients récupérée.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  customers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Customer'
+
+    post:
+      summary: Créer un nouveau profil client
+      operationId: createCustomer
+      tags:
+        - Customers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      responses:
+        '201':
+          description: Client créé avec succès.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+
+  /customers/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identifiant unique (Format CUST-XXX)
+        schema:
+          type: string
+          pattern: '^CUST-[0-9]{3}$'
+    
+    get:
+      summary: Récupère un profil client par ID
+      operationId: getCustomerById
+      tags:
+        - Customers
+      responses:
+        '200':
+          description: Profil trouvé.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+        '404':
+          description: Client non trouvé.
+
+    put:
+      summary: Mise à jour complète du profil
+      operationId: updateCustomer
+      tags:
+        - Customers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Customer'
+      responses:
+        '200':
+          description: Client mis à jour.
+        '404':
+          description: Client introuvable.
+
+components:
+  schemas:
+    Customer:
+      type: object
+      required:
+        - customer_id
+        - full_name
+        - email
+        - segment
+      properties:
+        customer_id:
+          type: string
+          description: Identifiant préfixé selon les conventions.
+          example: "CUST-001"
+        full_name:
+          type: string
+          example: "Jean Dupont"
+        email:
+          type: string
+          format: email
+          example: "j.dupont@email.com"
+        segment:
+          type: string
+          enum: [VIP, Standard, Nouveau]
+          description: Classification commerciale pour le ciblage.
+          example: "VIP"
+        loyalty_points:
+          type: integer
+          minimum: 0
+          example: 1500
+        interests:
+          type: array
+          description: Centres d'intérêt utilisés par l'Agent Discovery pour les recommandations.
+          items:
+            type: string
+          example: ["Gaming", "Streaming"]
+        metadata:
+          type: object
+          properties:
+            account_created:
+              type: string
+              format: date
+              example: "2024-01-15"
+            preferred_language:
+              type: string
+              example: "fr"
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "NOT_FOUND"
+            message:
+              type: string
+              example: "Client introuvable."
+            at:
+              type: string
+              format: date-time
+              description: Horodatage ISO-8601 conforme aux conventions de nommage.
+              example: "2026-04-15T11:10:00Z"
+              
+  responses:
+    NotFoundError:
+      description: La ressource demandée n'existe pas.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    UnauthorizedError:
+      description: Clé API manquante ou invalide.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
