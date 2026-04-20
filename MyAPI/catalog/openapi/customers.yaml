@@ -208,3 +208,4 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
 
+# Ceci est un test
