@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  # # 1. Ta Gateway API (Point d'entrée unique)
+  # kong:
+  #   image: kong:3.4-alpine
+  #   container_name: kong-gateway
+  #   user: "root"
+  #   environment:
+  #     KONG_DATABASE: "off"
+  #     KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
+  #     KONG_PROXY_ACCESS_LOG: /dev/stdout
+  #     KONG_ADMIN_ACCESS_LOG: /dev/stdout
+  #     KONG_PROXY_ERROR_LOG: /dev/stderr
+  #     KONG_ADMIN_ERROR_LOG: /dev/stderr
+  #     KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+  #   volumes:
+  #     - ./config:/usr/local/kong/declarative/
+  #   ports:
+  #     - "8000:8000" # Proxy HTTP (Tes agents appelleront ce port)
+  #     - "8443:8443" # Proxy HTTPS
+  #     - "8001:8001" # Admin API (Pour vérifier la config)
+  #   restart: always
+
+  # 2. Ton Backend Python (FastAPI)
+  backend:
+    build: ./MyAPI
+    container_name: magasin_elec_backend
+    volumes:
+      - ./MyAPI:/workdir
+      - ./MyAPI/catalog:/workdir/catalog
+    env_file: .env
+    ports:
+      - "8000:8000" 
+    restart: always
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n_orchestrator
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      # Utilisation des variables de ton fichier .env
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
+      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
+    volumes:
+      # Chemin exact selon ton arborescence :
+      - ./bd_vectoriel/n8n_data:/home/node/.local/share/n8n
+      # Optionnel : si tu veux que n8n accède à tes fichiers json de workflows
+      - ./bd_vectoriel/n8n_workflows:/home/node/workflows
+    env_file:
+      - .env
+
+  # 4. Redis (Pour la mémoire de tes agents)
+  redis:
+    image: redis:alpine
+    container_name: magasin_elec_redis
