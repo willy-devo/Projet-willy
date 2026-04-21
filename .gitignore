@@ -1,1 +1,4 @@
 .env
+
+bd_vectoriel/n8n_data
+bd_vectoriel/n8n_workflows

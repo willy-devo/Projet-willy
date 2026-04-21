@@ -35,26 +35,28 @@ services:
     restart: always
 
   n8n:
-    image: docker.n8n.io/n8nio/n8n
-    container_name: n8n_orchestrator
-    restart: always
-    ports:
-      - "5678:5678"
+    image: n8nio/n8n:latest
+    container_name: n8n
     environment:
+      # --- AUTHENTIFICATION ---
+      - N8N_BASIC_AUTH_ACTIVE=false
+      
+      # --- CONFIGURATION RÉSEAU ---
       - N8N_HOST=localhost
       - N8N_PORT=5678
       - N8N_PROTOCOL=http
-      - NODE_ENV=production
-      # Utilisation des variables de ton fichier .env
-      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
-      - N8N_USER_MANAGEMENT_JWT_SECRET=${N8N_USER_MANAGEMENT_JWT_SECRET}
+      # Note : Si tu utilises ngrok, l'URL ci-dessous devra correspondre à ton URL ngrok plus tard
+      - WEBHOOK_URL=https://poet-snarl-impolite.ngrok-free.dev/
+      
+      # --- ACTIVATION JS-YAML (L'étape cruciale pour ton erreur) ---
+      - NODE_FUNCTION_ALLOW_EXTERNAL=js-yaml
+      
+    ports:
+      - "5678:5678"
     volumes:
-      # Chemin exact selon ton arborescence :
-      - ./bd_vectoriel/n8n_data:/home/node/.local/share/n8n
-      # Optionnel : si tu veux que n8n accède à tes fichiers json de workflows
-      - ./bd_vectoriel/n8n_workflows:/home/node/workflows
-    env_file:
-      - .env
+      - ./bd_vectoriel/n8n_data:/home/node/.n8n
+    # On enlève depends_on pour supprimer le lien avec kong et mcp-server
+    # On garde networks si tu as d'autres services (comme Pinecone local ou une DB)
 
   # 4. Redis (Pour la mémoire de tes agents)
   redis:
