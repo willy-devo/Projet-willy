@@ -32,3 +32,5 @@ Magasin-Elec-Global/
 └── scripts/                    # BACKEND ET MAINTENANCE
     ├── setup.sh                # Script d'installation automatique
     └── main.py                 # Point d'entrée FastAPI
+
+    Petite modif
