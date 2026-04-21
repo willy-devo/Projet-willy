@@ -161,3 +161,5 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+
+# Je suis du texte
