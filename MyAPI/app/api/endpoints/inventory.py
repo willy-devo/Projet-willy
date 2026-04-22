@@ -28,3 +28,4 @@ async def read_product(id: str):
     if not product:
         raise HTTPException(status_code=404, detail="Le produit spécifié n'existe pas")
     return product
+
