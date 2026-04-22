@@ -14,7 +14,7 @@ servers:
 paths:
   /customers:
     get:
-      summary: Liste l'annuaire des clients de l'entreprise avec filtres
+      summary: Liste l'annuaire des clients avec filtres
       operationId: listCustomers
       tags:
         - Customers
